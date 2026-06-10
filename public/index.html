@@ -18,7 +18,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background 0.5s ease;
         }
+
+        body.menu-phase { background-color: #121212; }
+        body.lobby-phase { background-color: #0f1c1e; } 
+        body.game-phase { background-color: #1c0f0f; }  
 
         .bg-slider-container {
             position: fixed;
@@ -40,6 +45,9 @@
             filter: blur(2px) grayscale(30%);
             animation: scrollBackground 60s linear infinite;
         }
+
+        body.lobby-phase .bg-track { filter: blur(4px) hue-rotate(90deg); opacity: 0.1; }
+        body.game-phase .bg-track { filter: blur(1px) hue-rotate(0deg) saturate(1.5); opacity: 0.2; }
 
         .bg-track img {
             height: 100vh;
@@ -65,19 +73,20 @@
 
         /* --- INTERFACE DU JEU --- */
         .container { 
-            max-width: 500px; 
+            max-width: 600px; 
             width: 90%;
             margin: 20px auto; 
-            background: rgba(20, 20, 20, 0.85);
+            background: rgba(20, 20, 20, 0.9);
             padding: 25px;
-            border-radius: 8px;
-            border: 1px solid #222;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            border-radius: 12px;
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
             box-sizing: border-box;
         }
         
-        h1 { color: #ff4a4a; font-style: italic; margin-bottom: 5px; }
-        h2 { color: #f5f5dc; }
+        .container.large-game { max-width: 950px; }
+        h1 { color: #ff4a4a; font-style: italic; margin-bottom: 5px; letter-spacing: 1px; }
+        h2 { color: #f5f5dc; margin-top: 5px; }
         
         button {
             background-color: #f5f5dc;
@@ -90,35 +99,94 @@
             margin: 10px 0;
             width: 100%;
             border-bottom: 4px solid #ff4a4a;
+            border-radius: 4px;
+            transition: transform 0.1s ease;
         }
+        button:active { transform: translateY(2px); }
         button.quit { background-color: #ff4a4a; color: white; border-bottom: 4px solid #b31c1c; width: auto; margin-bottom: 20px; }
         button.sec { background-color: #333; color: white; border-bottom: 4px solid #555; }
+        button.param-toggle { margin: 15px 0; }
         button:disabled { background-color: #555; color: #aaa; border-bottom-color: #333; cursor: not-allowed; }
         
         input[type="text"], select, input[type="number"] {
             padding: 12px;
-            background: #222;
+            background: #1a1a1a;
             color: white;
-            border: 1px solid #ff4a4a;
+            border: 1px solid #333;
+            border-bottom: 2px solid #ff4a4a;
+            border-radius: 4px;
             width: 100%;
             box-sizing: border-box;
             margin-bottom: 15px;
+            font-size: 14px;
+        }
+        input[type="text"]:focus, select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #ff4a4a;
+            background: #222;
         }
         
         .screen { display: none; }
         .active { display: block; }
         
         .box {
-            background: #1a1a1a;
-            border: 1px solid #333;
+            background: #161616;
+            border: 1px solid #2d2d2d;
             padding: 15px;
             height: 150px;
             overflow-y: auto;
             margin: 10px 0;
             text-align: left;
+            border-radius: 6px;
         }
-        .scroll-box { height: 230px; }
+        .scroll-box { height: 140px; }
         
+        /* --- STYLE DU PANNEAU DES PARAMÈTRES --- */
+        .settings-zone {
+            display: none; 
+            background: #161616; 
+            padding: 20px; 
+            border: 1px solid #333; 
+            margin-bottom: 20px; 
+            border-radius: 8px; 
+            text-align: left;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .settings-title {
+            margin-top: 0; 
+            color: #ff4a4a; 
+            font-size: 14px; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #2d2d2d; 
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+        .settings-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .settings-group label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaa;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+        .settings-group input, .settings-group select {
+            margin-bottom: 0;
+        }
+        .full-width-group {
+            grid-column: 1 / -1;
+            margin-top: 5px;
+        }
+
         .chat-container { display: flex; gap: 5px; }
         .chat-input { flex-grow: 1; margin-bottom: 0 !important; }
         .chat-btn { width: auto; margin: 0; padding: 10px 15px; }
@@ -127,10 +195,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
-        .checkbox-item input { transform: scale(1.2); }
-
         .code-box {
             background: #ff4a4a;
             color: #121212;
@@ -143,7 +209,6 @@
             display: inline-block;
         }
 
-        /* --- STYLES AJOUTÉS : STATUTS & VOTES --- */
         .player-status {
             display: flex;
             justify-content: space-between;
@@ -151,145 +216,174 @@
             padding: 6px 0;
             border-bottom: 1px solid #252525;
         }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
         .online { background-color: #2ecc71; }
         .offline { background-color: #e74c3c; }
-        
-        .vote-select {
-            margin-top: 10px;
-        }
+
+        .icon-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .icon-option { font-size: 24px; padding: 8px; background: #222; border: 2px solid transparent; border-radius: 4px; cursor: pointer; }
+        .icon-option.selected { border-color: #ff4a4a; background: #333; }
+
+        .game-layout { display: flex; flex-direction: row; gap: 20px; }
+        .game-sidebar { flex: 1; display: flex; flex-direction: column; }
+        .game-main { flex: 1.2; display: flex; flex-direction: column; }
+        #game-chat { height: 320px; }
+
+        @media (max-width: 768px) { .game-layout { flex-direction: column; } }
     </style>
 </head>
-<body>
+<body class="menu-phase">
 
 <div class="bg-slider-container">
     <div class="bg-track">
-        <img src="amongus.jpg" alt="Among Us">
-        <img src="cyber.jpg" alt="Cyberpunk">
-        <img src="destiny.jpg" alt="Destiny">
-        <img src="gta.jpg" alt="GTA">
-        <img src="reddead.jpg" alt="Red Dead">
-        <img src="titanfall.jpg" alt="Titanfall">
-        
-        <img src="amongus.jpg" alt="Among Us">
-        <img src="cyber.jpg" alt="Cyberpunk">
-        <img src="destiny.jpg" alt="Destiny">
-        <img src="gta.jpg" alt="GTA">
-        <img src="reddead.jpg" alt="Red Dead">
-        <img src="titanfall.jpg" alt="Titanfall">
+        <img src="amongus.jpg" alt="Among Us"><img src="cyber.jpg" alt="Cyberpunk"><img src="gta.jpg" alt="GTA"><img src="reddead.jpg" alt="Red Dead">
+        <img src="amongus.jpg" alt="Among Us"><img src="cyber.jpg" alt="Cyberpunk"><img src="gta.jpg" alt="GTA"><img src="reddead.jpg" alt="Red Dead">
     </div>
     <div class="bg-overlay"></div>
 </div>
 
-<div class="container">
-    
+<div class="container" id="main-container">
+
     <div id="menu-screen" class="screen active">
         <h1>GAME IMPOSTEUR</h1>
-        <p style="color: #aaa; font-size: 14px;">Version Jeux Vidéo</p>
+        <p style="color: #aaa; font-size: 14px; margin-bottom: 20px;">Édition Jeux Vidéo</p>
         
-        <label for="pseudo-input">Choisis ton Pseudo :</label>
-        <input type="text" id="pseudo-input" placeholder="Ex: Player_One" value="Joueur 1">
+        <label for="pseudo-input" style="display:block; text-align:left; margin-bottom:5px; font-size:13px; color:#ccc;">Pseudo (Max 10 caract.) :</label>
+        <input type="text" id="pseudo-input" placeholder="Ex: Player_One" maxlength="10">
         
+        <div class="icon-selector" id="icon-picker">
+            <div class="icon-option selected" onclick="selectIcon(this, '🐶')">🐶</div>
+            <div class="icon-option" onclick="selectIcon(this, '🐔​​')">🐔​​</div>
+            <div class="icon-option" onclick="selectIcon(this, '🐭​')">🐭​</div>
+            <div class="icon-option" onclick="selectIcon(this, '🦊')">🦊</div>
+            <div class="icon-option" onclick="selectIcon(this, '🐻')">🐻</div>
+            <div class="icon-option" onclick="selectIcon(this, '🐼​')">🐼​</div>
+            <div class="icon-option" onclick="selectIcon(this, '​​🐹​')">​🐹​​</div>
+        </div>
+
+        <button class="sec param-toggle" onclick="toggleSettingsDropdown()">⚙️ PARAMÈTRES DU JEU</button>
+        
+        <div id="settings-dropdown-zone" class="settings-zone">
+            <div class="settings-title">Configuration de la partie</div>
+            
+            <div class="settings-grid">
+                <div class="settings-group">
+                    <label for="impo-count">Nombre d'Imposteurs</label>
+                    <input type="number" id="impo-count" min="1" max="5" value="1">
+                </div>
+
+                <div class="settings-group">
+                    <label for="word-difficulty">Difficulté des mots</label>
+                    <select id="word-difficulty" onchange="renderWordList()">
+                        <option value="all">Toutes les difficultés</option>
+                        <option value="facile">Facile (Grand public)</option>
+                        <option value="moyen">Moyen (Gamer standard)</option>
+                        <option value="difficile">Difficile (Hardcore Gamer)</option>
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <label for="word-type">Catégorie</label>
+                    <select id="word-type" onchange="renderWordList()">
+                        <option value="all">Tout mélanger</option>
+                        <option value="game">Noms de Jeux</option>
+                        <option value="character">Personnages</option>
+                        <option value="weapon">Armes & Équipements</option>
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <label>Visibilité du Rôle</label>
+                    <select id="setting-role-visibility">
+                        <option value="visible">Rôle + Mot (Standard)</option>
+                        <option value="hide-role-definitively">Mot Uniquement (Masquer rôle)</option>
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <label>Transparence du vote</label>
+                    <select id="setting-vote-disclosure">
+                        <option value="secret">Anonyme (X a voté !)</option>
+                        <option value="detailed">Détaillé (X a voté contre Y)</option>
+                    </select>
+                </div>
+
+                <div class="settings-group full-width-group">
+                    <label>Mots actifs dans la sélection (<span id="active-count" style="color:#ff4a4a;">0</span>) :</label>
+                    <div class="box scroll-box" id="dynamic-word-list" style="background:#111; height: 110px; margin-top:5px;"></div>
+                </div>
+            </div>
+        </div>
+
         <button onclick="createGame()">CRÉER UNE PARTIE</button>
         <button class="sec" onclick="showScreen('join-screen')">REJOINDRE UNE PARTIE</button>
-        <button class="sec" onclick="showScreen('settings-screen')">⚙ PARAMÈTRES DU JEU</button>
     </div>
 
     <div id="join-screen" class="screen">
         <button class="quit" onclick="showScreen('menu-screen')">✕ Retour</button>
         <h2>Rejoindre un Salon</h2>
-        
-        <label for="join-code-input">Entre le code de la partie :</label>
-        <input type="text" id="join-code-input" placeholder="Ex: AX72" style="text-transform: uppercase; text-align: center; font-size: 20px; font-weight: bold;">
-        
-        <button onclick="joinGame()">VALIDER & REJOINDRE</button>
-    </div>
-
-    <div id="settings-screen" class="screen">
-        <button class="quit" onclick="showScreen('menu-screen')">✕ Retour</button>
-        <h2>Paramètres de la Liste</h2>
-        
-        <label for="impo-count">Nombre d'Imposteurs (Max 3+) :</label>
-        <input type="number" id="impo-count" min="1" max="5" value="1">
-
-        <label for="word-type">Type de mots à deviner :</label>
-        <select id="word-type" onchange="renderWordList()">
-            <option value="all">Tout mélanger</option>
-            <option value="game">Noms de Jeux Uniquement</option>
-            <option value="character">Personnages de Jeux</option>
-            <option value="weapon">Armes de Jeux</option>
-        </select>
-
-        <label>Sélectionne les mots actifs (<span id="active-count">0</span> disponibles) :</label>
-        <div class="box scroll-box" id="dynamic-word-list"></div>
-        
-        <button onclick="showScreen('menu-screen')">Sauvegarder les options</button>
+        <input type="text" id="join-code-input" placeholder="CODE SECRET" style="text-transform: uppercase; text-align: center; font-size: 20px;">
+        <button onclick="joinGame()">REJOINDRE LA PARTIE</button>
     </div>
 
     <div id="lobby-screen" class="screen">
         <h2>Salon de Jeu</h2>
-        
-        <p style="margin-bottom: 5px; color: #aaa;">Code d'accès secret :</p>
         <div class="code-box" id="lobby-code-display">----</div>
         
-        <h3>Joueurs connectés :</h3>
-        <div class="box" id="player-list"></div>
+        <div id="lobby-settings-recap" style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; text-align: left; font-size: 13px; color: #ccc; margin-bottom: 15px;"></div>
 
-        <h3>Chat du Salon :</h3>
-        <div class="box" id="lobby-chat"></div>
+        <h3>Joueurs connectés :</h3>
+        <div class="box" id="player-list" style="height: 110px;"></div>
+
+        <h3>Chat :</h3>
+        <div class="box" id="lobby-chat" style="height: 100px;"></div>
         <div class="chat-container">
-            <input type="text" class="chat-input" id="lobby-msg" placeholder="Message..." onkeydown="checkEnter(event, 'lobby-chat', 'lobby-msg')">
+            <input type="text" class="chat-input" id="lobby-msg" placeholder="Message (Max 30 car.)" maxlength="30" onkeydown="checkEnter(event, 'lobby-chat', 'lobby-msg')">
             <button class="chat-btn" onclick="sendMsg('lobby-chat', 'lobby-msg')">Envoyer</button>
         </div>
         
         <br>
-        <button onclick="startGame()">LANCER LA GAME ▶</button>
-        <button class="quit" style="width: 100%; margin-top: 10px;" onclick="showScreen('menu-screen')">✕ Quitter le salon</button>
+        <button id="start-game-btn" style="display:none;" onclick="startGame()">LANCER LA GAME ▶</button>
+        <button class="quit" style="width: 100%; margin-top: 10px;" onclick="showScreen('menu-screen')">✕ Quitter</button>
     </div>
 
     <div id="game-screen" class="screen">
-        <button class="quit" onclick="showScreen('menu-screen')">✕ Quitter la partie</button>
-        <h2>La Partie commence !</h2>
+        <button class="quit" onclick="showScreen('menu-screen')">✕ Abandonner</button>
+        <h2>Partie en cours !</h2>
         
-        <div style="background: #1a1a1a; border: 2px dashed #ff4a4a; padding: 20px; margin: 20px 0;">
-            <h3>Ton Rôle : <span id="role-display" style="color: #ff4a4a;">-</span></h3>
-            <h3>Ton Mot : <span id="word-display" style="color: #f5f5dc;">-</span></h3>
-        </div>
+        <div class="game-layout">
+            <div class="game-sidebar">
+                <h3>Chat de jeu :</h3>
+                <div class="box" id="game-chat"></div>
+                <div class="chat-container">
+                    <input type="text" class="chat-input" id="game-msg" placeholder="Indices, débats... (Max 30 car.)" maxlength="30" onkeydown="checkEnter(event, 'game-chat', 'game-msg')">
+                    <button class="chat-btn" onclick="sendMsg('game-chat', 'game-msg')">Envoyer</button>
+                </div>
+            </div>
 
-        <h3>Joueurs en direct :</h3>
-        <div class="box" id="game-player-status-list" style="height: 110px;"></div>
+            <div class="game-main">
+                <div style="background: #1a1a1a; border: 2px dashed #ff4a4a; padding: 15px; margin-bottom: 15px; text-align: left;">
+                    <h3 id="role-display-container" style="margin: 5px 0;">Rôle : <span id="role-display" style="color: #ff4a4a;">-</span></h3>
+                    <h3 style="margin: 5px 0;">Ton Mot assigné : <span id="word-display" style="color: #f5f5dc; font-weight: bold; background: #222; padding: 2px 6px;">-</span></h3>
+                </div>
 
-        <h3>Espace de Vote :</h3>
-        <div style="background: #1a1a1a; padding: 15px; border: 1px solid #333; margin-bottom: 15px; border-radius: 4px;">
-            <label for="vote-select" style="font-size: 14px; color:#ccc;">Qui suspectes-tu d'être l'imposteur ?</label>
-            <select id="vote-select" class="vote-select">
-                <option value="">-- Sélectionner un joueur --</option>
-            </select>
-            <button id="vote-btn" onclick="submitVote()">VOTER POUR CE JOUEUR</button>
-        </div>
+                <h3>Statut des joueurs :</h3>
+                <div class="box" id="game-player-status-list" style="height: 100px;"></div>
 
-        <h3>Chat de la Partie (Historique) :</h3>
-        <div class="box" id="game-chat"></div>
-        <div class="chat-container">
-            <input type="text" class="chat-input" id="game-msg" placeholder="Débattez ou donnez vos indices..." onkeydown="checkEnter(event, 'game-chat', 'game-msg')">
-            <button class="chat-btn" onclick="sendMsg('game-chat', 'game-msg')">Envoyer</button>
+                <h3>Vote :</h3>
+                <div style="background: #1a1a1a; padding: 15px; border: 1px solid #333; text-align: left;">
+                    <select id="vote-select" class="vote-select"><option value="">-- Voter pour --</option></select>
+                    <button id="vote-btn" onclick="submitVote()">VALIDER MON VOTE</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="end-screen" class="screen">
-        <h1 id="end-title" style="font-size: 32px; margin-top: 20px; letter-spacing: 1px;">VICTOIRE !</h1>
-        <p id="end-subtitle" style="color: #aaa; font-size: 15px; margin-bottom: 20px;">Voici le récapitulatif des rôles assignés :</p>
-        
-        <div class="box" id="end-roles-list" style="height: auto; min-height: 130px; line-height: 1.6;">
-            </div>
-
-        <button onclick="returnToLobby()" style="background-color: #2ecc71; border-bottom: 4px solid #27ae60; color: white; margin-top: 25px;">REVENIR AU SALON</button>
+        <h1 id="end-title">-</h1>
+        <p style="color: #aaa;">Tableau récapitulatif des rôles réels :</p>
+        <div class="box" id="end-roles-list" style="height: auto; min-height: 100px;"></div>
+        <button onclick="returnToLobby()" style="background-color: #2ecc71; border-bottom: 4px solid #27ae60; color: white; margin-top: 20px;">REVENIR AU SALON</button>
     </div>
 
 </div>
@@ -297,148 +391,145 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
+    let monPseudo = "", monIcone = "🎮", gameCodeActuel = "";
 
-    let monPseudo = "Joueur 1";
-    let gameCodeActuel = "";
-
-    // TOUT LE DICTIONNAIRE D'ORIGINE INTEGRAL (Mots 0 à 99)
     const dictionnaireMots = [
-      // 🎮 GAMES (1–60)
-      { id: 0, type: "game", nom: "Minecraft / Terraria", innocent: "Minecraft", imposteur: "Terraria", coche: true },
-      { id: 1, type: "game", nom: "Fortnite / PUBG", innocent: "Fortnite", imposteur: "PUBG", coche: true },
-      { id: 2, type: "game", nom: "The Witcher 3 / Skyrim", innocent: "The Witcher 3", imposteur: "Skyrim", coche: true },
-      { id: 3, type: "game", nom: "Elden Ring / Dark Souls", innocent: "Elden Ring", imposteur: "Dark Souls", coche: true },
-      { id: 4, type: "game", nom: "Valorant / CS2", innocent: "Valorant", imposteur: "Counter-Strike 2", coche: true },
-      { id: 5, type: "game", nom: "League of Legends / Dota 2", innocent: "LoL", imposteur: "Dota 2", coche: true },
-      { id: 6, type: "game", nom: "Genshin Impact / Honkai Star Rail", innocent: "Genshin Impact", imposteur: "Honkai Star Rail", coche: true },
-      { id: 7, type: "game", nom: "Overwatch / Paladins", innocent: "Overwatch", imposteur: "Paladins", coche: true },
-      { id: 8, type: "game", nom: "Roblox / Minecraft Dungeons", innocent: "Roblox", imposteur: "Minecraft Dungeons", coche: true },
-      { id: 9, type: "game", nom: "FIFA / eFootball", innocent: "FIFA", imposteur: "eFootball", coche: true },
-      { id: 10, type: "game", nom: "Rocket League / Destruction AllStars", innocent: "Rocket League", imposteur: "Destruction AllStars", coche: true },
-      { id: 11, type: "game", nom: "GTA V / Watch Dogs", innocent: "GTA V", imposteur: "Watch Dogs", coche: true },
-      { id: 12, type: "game", nom: "Red Dead Redemption / Call of Juarez", innocent: "Red Dead Redemption", imposteur: "Call of Juarez", coche: true },
-      { id: 13, type: "game", nom: "Cyberpunk 2077 / Deus Ex", innocent: "Cyberpunk 2077", imposteur: "Deus Ex", coche: true },
-      { id: 14, type: "game", nom: "Halo / Destiny", innocent: "Halo", imposteur: "Destiny", coche: true },
-      { id: 15, type: "game", nom: "Titanfall / Apex Legends", innocent: "Titanfall", imposteur: "Apex Legends", coche: true },
-      { id: 16, type: "game", nom: "Call of Duty / Battlefield", innocent: "Call of Duty", imposteur: "Battlefield", coche: true },
-      { id: 17, type: "game", nom: "Among Us / Gartic Phone", innocent: "Among Us", imposteur: "Gartic Phone", coche: true },
-      { id: 18, type: "game", nom: "Animal Crossing / Stardew Valley", innocent: "Animal Crossing", imposteur: "Stardew Valley", coche: true },
-      { id: 19, type: "game", nom: "Hollow Knight / Celeste", innocent: "Hollow Knight", imposteur: "Celeste", coche: true },
-      { id: 20, type: "game", nom: "The Sims / Cities Skylines", innocent: "The Sims", imposteur: "Cities Skylines", coche: true },
-      { id: 21, type: "game", nom: "Assassin's Creed / Ghost of Tsushima", innocent: "Assassin's Creed", imposteur: "Ghost of Tsushima", coche: true },
-      { id: 22, type: "game", nom: "Far Cry / Just Cause", innocent: "Far Cry", imposteur: "Just Cause", coche: true },
-      { id: 23, type: "game", nom: "Metal Gear Solid / Splinter Cell", innocent: "Metal Gear Solid", imposteur: "Splinter Cell", coche: true },
-      { id: 24, type: "game", nom: "The Last of Us / Days Gone", innocent: "The Last of Us", imposteur: "Days Gone", coche: true },
-      { id: 25, type: "game", nom: "God of War / Darksiders", innocent: "God of War", imposteur: "Darksiders", coche: true },
-      { id: 26, type: "game", nom: "Resident Evil / Silent Hill", innocent: "Resident Evil", imposteur: "Silent Hill", coche: true },
-      { id: 27, type: "game", nom: "Dead by Daylight / Phasmophobia", innocent: "DBD", imposteur: "Phasmophobia", coche: true },
-      { id: 28, type: "game", nom: "Fall Guys / Stumble Guys", innocent: "Fall Guys", imposteur: "Stumble Guys", coche: true },
-      { id: 29, type: "game", nom: "Mario Kart / Crash Team Racing", innocent: "Mario Kart", imposteur: "Crash Team Racing", coche: true },
-      { id: 30, type: "game", nom: "Zelda / Okami", innocent: "Zelda", imposteur: "Okami", coche: true },
-      { id: 31, type: "game", nom: "Pokémon / Digimon", innocent: "Pokémon", imposteur: "Digimon", coche: true },
-      { id: 32, type: "game", nom: "Street Fighter / Tekken", innocent: "Street Fighter", imposteur: "Tekken", coche: true },
-      { id: 33, type: "game", nom: "Mortal Kombat / Injustice", innocent: "Mortal Kombat", imposteur: "Injustice", coche: true },
-      { id: 34, type: "game", nom: "Diablo / Path of Exile", innocent: "Diablo", imposteur: "Path of Exile", coche: true },
-      { id: 35, type: "game", nom: "Starfield / No Man’s Sky", innocent: "Starfield", imposteur: "No Man’s Sky", coche: true },
-      { id: 36, type: "game", nom: "Bioshock / Prey", innocent: "Bioshock", imposteur: "Prey", coche: true },
-      { id: 37, type: "game", nom: "Portal / The Talos Principle", innocent: "Portal", imposteur: "Talos Principle", coche: true },
-      { id: 38, type: "game", nom: "Left 4 Dead / Back 4 Blood", innocent: "L4D", imposteur: "Back 4 Blood", coche: true },
-      { id: 39, type: "game", nom: "Skate / Tony Hawk Pro Skater", innocent: "Skate", imposteur: "Tony Hawk", coche: true },
-      { id: 40, type: "game", nom: "Forza Horizon / Gran Turismo", innocent: "Forza Horizon", imposteur: "Gran Turismo", coche: true },
-      { id: 41, type: "game", nom: "Sea of Thieves / Raft", innocent: "Sea of Thieves", imposteur: "Raft", coche: true },
-      { id: 42, type: "game", nom: "ARK / Rust", innocent: "ARK", imposteur: "Rust", coche: true },
-      { id: 43, type: "game", nom: "Valorant / Overwatch", innocent: "Valorant", imposteur: "Overwatch", coche: true },
-      { id: 44, type: "game", nom: "Cyberpunk / GTA RP", innocent: "Cyberpunk", imposteur: "GTA RP", coche: true },
-      { id: 45, type: "game", nom: "Terraria / Starbound", innocent: "Terraria", imposteur: "Starbound", coche: true },
-      { id: 46, type: "game", nom: "Cuphead / Hollow Knight", innocent: "Cuphead", imposteur: "Hollow Knight", coche: true },
-      { id: 47, type: "game", nom: "Super Mario / Sonic", innocent: "Mario", imposteur: "Sonic", coche: true },
-      { id: 48, type: "game", nom: "Zelda / Elden Ring", innocent: "Zelda", imposteur: "Elden Ring", coche: true },
-      { id: 49, type: "game", nom: "GTA San Andreas / GTA V", innocent: "GTA SA", imposteur: "GTA V", coche: true },
-      { id: 50, type: "game", nom: "Battlefront / Halo Wars", innocent: "Battlefront", imposteur: "Halo Wars", coche: true },
-      { id: 51, type: "game", nom: "Minecraft / Lego Worlds", innocent: "Minecraft", imposteur: "Lego Worlds", coche: true },
-      { id: 52, type: "game", nom: "Among Us / Werewolf Online", innocent: "Among Us", imposteur: "Werewolf Online", coche: true },
-      { id: 53, type: "game", nom: "Valorant / CS:GO", innocent: "Valorant", imposteur: "CS:GO", coche: true },
-      { id: 54, type: "game", nom: "FIFA / PES", innocent: "FIFA", imposteur: "PES", coche: true },
-      { id: 55, type: "game", nom: "Roblox / Fortnite Creative", innocent: "Roblox", imposteur: "Fortnite Creative", coche: true },
-      { id: 56, type: "game", nom: "Genshin / Tower of Fantasy", innocent: "Genshin", imposteur: "Tower of Fantasy", coche: true },
-      { id: 57, type: "game", nom: "Doom / Wolfenstein", innocent: "Doom", imposteur: "Wolfenstein", coche: true },
-      { id: 58, type: "game", nom: "Animal Crossing / Harvest Moon", innocent: "Animal Crossing", imposteur: "Harvest Moon", coche: true },
-      { id: 59, type: "game", nom: "Star Wars Jedi / Force Unleashed", innocent: "Jedi Fallen Order", imposteur: "Force Unleashed", coche: true },
+      // --- FACILE ---
+      { id: 0, type: "game", difficulte:"facile", nom: "Minecraft / Terraria", innocent: "Minecraft", imposteur: "Terraria", coche: true },
+      { id: 1, type: "game", difficulte:"facile", nom: "Fortnite / PUBG", innocent: "Fortnite", imposteur: "PUBG", coche: true },
+      { id: 2, type: "game", difficulte:"facile", nom: "FIFA / eFootball", innocent: "FIFA", imposteur: "eFootball", coche: true },
+      { id: 3, type: "game", difficulte:"facile", nom: "GTA V / Watch Dogs", innocent: "GTA V", imposteur: "Watch Dogs", coche: true },
+      { id: 4, type: "game", difficulte:"facile", nom: "Super Mario / Sonic", innocent: "Super Mario", imposteur: "Sonic The Hedgehog", coche: true },
+      { id: 5, type: "game", difficulte:"facile", nom: "Call of Duty / Battlefield", innocent: "Call of Duty", imposteur: "Battlefield", coche: true },
+      { id: 6, type: "game", difficulte:"facile", nom: "The Sims / Animal Crossing", innocent: "The Sims", imposteur: "Animal Crossing", coche: true },
+      { id: 7, type: "game", difficulte:"facile", nom: "Pac-Man / Tetris", innocent: "Pac-Man", imposteur: "Tetris", coche: true },
+      { id: 8, type: "game", difficulte:"facile", nom: "Mario Kart / Crash Team Racing", innocent: "Mario Kart", imposteur: "Crash Team Racing", coche: true },
+      { id: 9, type: "game", difficulte:"facile", nom: "Among Us / Project Winter", innocent: "Among Us", imposteur: "Project Winter", coche: true },
+      { id: 10, type: "game", difficulte:"facile", nom: "Wii Sports / Nintendo Switch Sports", innocent: "Wii Sports", imposteur: "Nintendo Switch Sports", coche: true },
+      { id: 11, type: "game", difficulte:"facile", nom: "Pokémon Version Rouge / Version Bleue", innocent: "Pokémon Rouge", imposteur: "Pokémon Bleu", coche: true },
+      { id: 12, type: "game", difficulte:"facile", nom: "Roblox / Minecraft", innocent: "Roblox", imposteur: "Minecraft", coche: true },
+      { id: 13, type: "game", difficulte:"facile", nom: "Spider-Man / Batman Arkham", innocent: "Spider-Man", imposteur: "Batman Arkham", coche: true },
+      { id: 14, type: "game", difficulte:"facile", nom: "Rocket League / Trackmania", innocent: "Rocket League", imposteur: "Trackmania", coche: true },
+      { id: 15, type: "character", difficulte:"facile", nom: "Mario / Luigi", innocent: "Mario", imposteur: "Luigi", coche: true },
+      { id: 16, type: "character", difficulte:"facile", nom: "Pikachu / Eevee (Évoli)", innocent: "Pikachu", imposteur: "Évoli", coche: true },
+      { id: 17, type: "character", difficulte:"facile", nom: "Sonic / Shadow", innocent: "Sonic", imposteur: "Shadow", coche: true },
+      { id: 18, type: "character", difficulte:"facile", nom: "Link / Zelda", innocent: "Link", imposteur: "Zelda", coche: true },
+      { id: 19, type: "character", difficulte:"facile", nom: "Barbie / Lara Croft", innocent: "Lara Croft", imposteur: "Barbie", coche: true },
+      { id: 20, type: "character", difficulte:"facile", nom: "Steve / Alex", innocent: "Steve", imposteur: "Alex", coche: true },
+      { id: 21, type: "character", difficulte:"facile", nom: "Yoshi / Toad", innocent: "Yoshi", imposteur: "Toad", coche: true },
+      { id: 22, type: "character", difficulte:"facile", nom: "Bowser / Donkey Kong", innocent: "Bowser", imposteur: "Donkey Kong", coche: true },
+      { id: 23, type: "character", difficulte:"facile", nom: "Spider-Man / Miles Morales", innocent: "Spider-Man", imposteur: "Miles Morales", coche: true },
+      { id: 24, type: "weapon", difficulte:"facile", nom: "Sniper / Fusil à pompe", innocent: "Sniper Rifle", imposteur: "Fusil à pompe", coche: true },
+      { id: 25, type: "weapon", difficulte:"facile", nom: "Épée en Diamant / Épée en Or", innocent: "Épée en Diamant", imposteur: "Épée en Or", coche: true },
+      { id: 26, type: "weapon", difficulte:"facile", nom: "Pokéball / Masterball", innocent: "Pokéball", imposteur: "Masterball", coche: true },
+      { id: 27, type: "weapon", difficulte:"facile", nom: "Grenade / Dynamite", innocent: "Grenade", imposteur: "Dynamite", coche: true },
+      { id: 28, type: "weapon", difficulte:"facile", nom: "Lance-roquettes / Minigun", innocent: "Lance-roquettes", imposteur: "Minigun", coche: true },
+      { id: 29, type: "weapon", difficulte:"facile", nom: "Arc / Arbalète", innocent: "Arc", imposteur: "Arbalète", coche: true },
+      { id: 30, type: "weapon", difficulte:"facile", nom: "Bouclier / Armure", innocent: "Bouclier", imposteur: "Armure", coche: true },
+      { id: 31, type: "weapon", difficulte:"facile", nom: "Pioche / Hache", innocent: "Pioche", imposteur: "Hache", coche: true },
+      { id: 32, type: "weapon", difficulte:"facile", nom: "Carapace Bleue / Carapace Rouge", innocent: "Carapace Bleue", imposteur: "Carapace Rouge", coche: true },
 
-      // 🧑 CHARACTERS (60–85)
-      { id: 60, type: "character", nom: "Mario / Luigi", innocent: "Mario", imposteur: "Luigi", coche: true },
-      { id: 61, type: "character", nom: "Link / Zelda", innocent: "Link", imposteur: "Zelda", coche: true },
-      { id: 62, type: "character", nom: "Kratos / Atreus", innocent: "Kratos", imposteur: "Atreus", coche: true },
-      { id: 63, type: "character", nom: "Geralt / Ciri", innocent: "Geralt", imposteur: "Ciri", coche: true },
-      { id: 64, type: "character", nom: "Arthur / John", innocent: "Arthur Morgan", imposteur: "John Marston", coche: true },
-      { id: 65, type: "character", nom: "V / Johnny Silverhand", innocent: "V", imposteur: "Johnny Silverhand", coche: true },
-      { id: 66, type: "character", nom: "Master Chief / Cortana", innocent: "Master Chief", imposteur: "Cortana", coche: true },
-      { id: 67, type: "character", nom: "Ellie / Joel", innocent: "Ellie", imposteur: "Joel", coche: true },
-      { id: 68, type: "character", nom: "Cloud / Sephiroth", innocent: "Cloud", imposteur: "Sephiroth", coche: true },
-      { id: 69, type: "character", nom: "Sonic / Tails", innocent: "Sonic", imposteur: "Tails", coche: true },
-      { id: 70, type: "character", nom: "Kirby / Meta Knight", innocent: "Kirby", imposteur: "Meta Knight", coche: true },
-      { id: 71, type: "character", nom: "Pikachu / Eevee", innocent: "Pikachu", imposteur: "Eevee", coche: true },
-      { id: 72, type: "character", nom: "Samus / Ridley", innocent: "Samus", imposteur: "Ridley", coche: true },
-      { id: 73, type: "character", nom: "Dante / Vergil", innocent: "Dante", imposteur: "Vergil", coche: true },
-      { id: 74, type: "character", nom: "Batman / Joker", innocent: "Batman", imposteur: "Joker", coche: true },
-      { id: 75, type: "character", nom: "Spider-Man / Venom", innocent: "Spider-Man", imposteur: "Venom", coche: true },
-      { id: 76, type: "character", nom: "Iron Man / Captain America", innocent: "Iron Man", imposteur: "Cap America", coche: true },
-      { id: 77, type: "character", nom: "Naruto / Sasuke", innocent: "Naruto", imposteur: "Sasuke", coche: true },
-      { id: 78, type: "character", nom: "Goku / Vegeta", innocent: "Goku", imposteur: "Vegeta", coche: true },
-      { id: 79, type: "character", nom: "Luffy / Zoro", innocent: "Luffy", imposteur: "Zoro", coche: true },
-      { id: 80, type: "character", nom: "Saitama / Genos", innocent: "Saitama", imposteur: "Genos", coche: true },
-      { id: 81, type: "character", nom: "Ezio / Altair", innocent: "Ezio", imposteur: "Altair", coche: true },
-      { id: 82, type: "character", nom: "Tracer / Reaper", innocent: "Tracer", imposteur: "Reaper", coche: true },
-      { id: 83, type: "character", nom: "Jinx / Vi", innocent: "Jinx", imposteur: "Vi", coche: true },
-      { id: 84, type: "character", nom: "Geralt / Yennefer", innocent: "Geralt", imposteur: "Yennefer", coche: true },
-      { id: 85, type: "character", nom: "Arthur / Dutch", innocent: "Arthur Morgan", imposteur: "Dutch", coche: true },
+      // --- MOYEN ---
+      { id: 33, type: "game", difficulte:"moyen", nom: "The Witcher 3 / Skyrim", innocent: "The Witcher 3", imposteur: "Skyrim", coche: true },
+      { id: 34, type: "game", difficulte:"moyen", nom: "Elden Ring / Dark Souls", innocent: "Elden Ring", imposteur: "Dark Souls", coche: true },
+      { id: 35, type: "game", difficulte:"moyen", nom: "Valorant / Counter-Strike 2", innocent: "Valorant", imposteur: "Counter-Strike 2", coche: true },
+      { id: 36, type: "game", difficulte:"moyen", nom: "Red Dead Redemption 2 / Cyberpunk 2077", innocent: "Red Dead Redemption 2", imposteur: "Cyberpunk 2077", coche: true },
+      { id: 37, type: "game", difficulte:"moyen", nom: "Resident Evil / Silent Hill", innocent: "Resident Evil", imposteur: "Silent Hill", coche: true },
+      { id: 38, type: "game", difficulte:"moyen", nom: "League of Legends / Dota 2", innocent: "League of Legends", imposteur: "Dota 2", coche: true },
+      { id: 39, type: "game", difficulte:"moyen", nom: "Overwatch / Team Fortress 2", innocent: "Overwatch", imposteur: "Team Fortress 2", coche: true },
+      { id: 40, type: "game", difficulte:"moyen", nom: "Hollow Knight / Ori and the Blind Forest", innocent: "Hollow Knight", imposteur: "Ori", coche: true },
+      { id: 41, type: "game", difficulte:"moyen", nom: "Hades / Dead Cells", innocent: "Hades", imposteur: "Dead Cells", coche: true },
+      { id: 42, type: "game", difficulte:"moyen", nom: "Stardew Valley / Terraria", innocent: "Stardew Valley", imposteur: "Terraria", coche: true },
+      { id: 43, type: "game", difficulte:"moyen", nom: "Assassin's Creed / Ghost of Tsushima", innocent: "Assassin's Creed", imposteur: "Ghost of Tsushima", coche: true },
+      { id: 44, type: "game", difficulte:"moyen", nom: "God of War / Devil May Cry", innocent: "God of War", imposteur: "Devil May Cry", coche: true },
+      { id: 45, type: "game", difficulte:"moyen", nom: "Uncharted / Tomb Raider", innocent: "Uncharted", imposteur: "Tomb Raider", coche: true },
+      { id: 46, type: "game", difficulte:"moyen", nom: "Doom Eternal / Wolfenstein", innocent: "Doom Eternal", imposteur: "Wolfenstein", coche: true },
+      { id: 47, type: "game", difficulte:"moyen", nom: "Fallout 4 / Starfield", innocent: "Fallout 4", imposteur: "Starfield", coche: true },
+      { id: 48, type: "game", difficulte:"moyen", nom: "BioShock / Prey", innocent: "BioShock", imposteur: "Prey", coche: true },
+      { id: 49, type: "game", difficulte:"moyen", nom: "Forza Horizon / Gran Turismo", innocent: "Forza Horizon", imposteur: "Gran Turismo", coche: true },
+      { id: 50, type: "game", difficulte:"moyen", nom: "Street Fighter / Tekken", innocent: "Street Fighter", imposteur: "Tekken", coche: true },
+      { id: 51, type: "game", difficulte:"moyen", nom: "Dead by Daylight / Phasmophobia", innocent: "Dead by Daylight", imposteur: "Phasmophobia", coche: true },
+      { id: 52, type: "game", difficulte:"moyen", nom: "World of Warcraft / Final Fantasy XIV", innocent: "World of Warcraft", imposteur: "Final Fantasy XIV", coche: true },
+      { id: 53, type: "game", difficulte:"moyen", nom: "Monster Hunter / Dauntless", innocent: "Monster Hunter", imposteur: "Dauntless", coche: true },
+      { id: 54, type: "game", difficulte:"moyen", nom: "Civilization VI / Age of Empires", innocent: "Civilization VI", imposteur: "Age of Empires", coche: true },
+      { id: 55, type: "game", difficulte:"moyen", nom: "Subnautica / No Man's Sky", innocent: "Subnautica", imposteur: "No Man's Sky", coche: true },
+      { id: 56, type: "game", difficulte:"moyen", nom: "Splatoon / Ninjala", innocent: "Splatoon", imposteur: "Ninjala", coche: true },
+      { id: 57, type: "game", difficulte:"moyen", nom: "Crash Bandicoot / Spyro", innocent: "Crash Bandicoot", imposteur: "Spyro", coche: true },
+      { id: 58, type: "game", difficulte:"moyen", nom: "Ratchet & Clank / Jak and Daxter", innocent: "Ratchet & Clank", imposteur: "Jak and Daxter", coche: true },
+      { id: 59, type: "game", difficulte:"moyen", nom: "Sea of Thieves / Skull and Bones", innocent: "Sea of Thieves", imposteur: "Skull and Bones", coche: true },
+      { id: 60, type: "character", difficulte:"moyen", nom: "Kratos / Atreus", innocent: "Kratos", imposteur: "Atreus", coche: true },
+      { id: 61, type: "character", difficulte:"moyen", nom: "Master Chief / Doom Slayer", innocent: "Master Chief", imposteur: "Doom Slayer", coche: true },
+      { id: 62, type: "character", difficulte:"moyen", nom: "Geralt de Riv / Ciri", innocent: "Geralt de Riv", imposteur: "Ciri", coche: true },
+      { id: 63, type: "character", difficulte:"moyen", nom: "Arthur Morgan / John Marston", innocent: "Arthur Morgan", imposteur: "John Marston", coche: true },
+      { id: 64, type: "character", difficulte:"moyen", nom: "Nathan Drake / Lara Croft", innocent: "Nathan Drake", imposteur: "Lara Croft", coche: true },
+      { id: 65, type: "character", difficulte:"moyen", nom: "Joel / Ellie", innocent: "Joel", imposteur: "Ellie", coche: true },
+      { id: 66, type: "character", difficulte:"moyen", nom: "Scorpion / Sub-Zero", innocent: "Scorpion", imposteur: "Sub-Zero", coche: true },
+      { id: 67, type: "character", difficulte:"moyen", nom: "Ryu / Ken", innocent: "Ryu", imposteur: "Ken", coche: true },
+      { id: 68, type: "character", difficulte:"moyen", nom: "Leon S. Kennedy / Chris Redfield", innocent: "Leon S. Kennedy", imposteur: "Chris Redfield", coche: true },
+      { id: 69, type: "character", difficulte:"moyen", nom: "Trevor / Michael", innocent: "Trevor", imposteur: "Michael", coche: true },
+      { id: 70, type: "character", difficulte:"moyen", nom: "Batman / Joker", innocent: "Batman", imposteur: "Joker", coche: true },
+      { id: 71, type: "weapon", difficulte:"moyen", nom: "AK-47 / M4A1", innocent: "AK-47", imposteur: "M4A1", coche: true },
+      { id: 72, type: "weapon", difficulte:"moyen", nom: "Master Sword / Bouclier Hylien", innocent: "Master Sword", imposteur: "Bouclier Hylien", coche: true },
+      { id: 73, type: "weapon", difficulte:"moyen", nom: "Lame secrète / Tomahawk", innocent: "Lame secrète", imposteur: "Tomahawk", coche: true },
+      { id: 74, type: "weapon", difficulte:"moyen", nom: "AWP / Scout", innocent: "AWP", imposteur: "Scout", coche: true },
+      { id: 75, type: "weapon", difficulte:"moyen", nom: "Grappin / Hookshot", innocent: "Grappin", imposteur: "Hookshot", coche: true },
+      { id: 76, type: "weapon", difficulte:"moyen", nom: "Pistolet Laser / Pistolet Éclair", innocent: "Pistolet Laser", imposteur: "Pistolet Éclair", coche: true },
 
-      // 🔫 WEAPONS (86–99)
-      { id: 86, type: "weapon", nom: "AK-47 / M4A1", innocent: "AK-47", imposteur: "M4A1", coche: true },
-      { id: 87, type: "weapon", nom: "Smart Pistol / Wingman", innocent: "Smart Pistol", imposteur: "Wingman", coche: true },
-      { id: 88, type: "weapon", nom: "Energy Sword / Gravity Hammer", innocent: "Energy Sword", imposteur: "Gravity Hammer", coche: true },
-      { id: 89, type: "weapon", nom: "BFG / Super Shotgun", innocent: "BFG", imposteur: "Super Shotgun", coche: true },
-      { id: 90, type: "weapon", nom: "Sniper / Shotgun", innocent: "Sniper Rifle", imposteur: "Shotgun", coche: true },
-      { id: 91, type: "weapon", nom: "Katana / Tanto", innocent: "Katana", imposteur: "Tanto", coche: true },
-      { id: 92, type: "weapon", nom: "Bow / Crossbow", innocent: "Bow", imposteur: "Crossbow", coche: true },
-      { id: 93, type: "weapon", nom: "Rocket Launcher / Grenade Launcher", innocent: "Rocket Launcher", imposteur: "Grenade Launcher", coche: true },
-      { id: 94, type: "weapon", nom: "Flamethrower / Ice Gun", innocent: "Flamethrower", imposteur: "Ice Gun", coche: true },
-      { id: 95, type: "weapon", nom: "Laser Rifle / Plasma Rifle", innocent: "Laser Rifle", imposteur: "Plasma Rifle", coche: true },
-      { id: 96, type: "weapon", nom: "Revolver / Pistol", innocent: "Revolver", imposteur: "Pistol", coche: true },
-      { id: 97, type: "weapon", nom: "Hammer / Axe", innocent: "Hammer", imposteur: "Axe", coche: true },
-      { id: 98, type: "weapon", nom: "Shield / Sword", innocent: "Shield", imposteur: "Sword", coche: true },
-      { id: 99, type: "weapon", nom: "Throwing Knife / Kunai", innocent: "Throwing Knife", imposteur: "Kunai", coche: true }
+      // --- DIFFICILE ---
+      { id: 77, type: "game", difficulte:"difficile", nom: "Titanfall / Apex Legends", innocent: "Titanfall", imposteur: "Apex Legends", coche: true },
+      { id: 78, type: "game", difficulte:"difficile", nom: "Mass Effect / The Outer Worlds", innocent: "Mass Effect", imposteur: "The Outer Worlds", coche: true },
+      { id: 79, type: "game", difficulte:"difficile", nom: "Portal / The Talos Principle", innocent: "Portal", imposteur: "The Talos Principle", coche: true },
+      { id: 80, type: "game", difficulte:"difficile", nom: "Half-Life / Black Mesa", innocent: "Half-Life", imposteur: "Black Mesa", coche: true },
+      { id: 81, type: "game", difficulte:"difficile", nom: "Sekiro / Ghost of Tsushima", innocent: "Sekiro", imposteur: "Ghost of Tsushima", coche: true },
+      { id: 82, type: "game", difficulte:"difficile", nom: "Persona 5 / Shin Megami Tensei", innocent: "Persona 5", imposteur: "Shin Megami Tensei", coche: true },
+      { id: 83, type: "game", difficulte:"difficile", nom: "Yakuza / Judgment", innocent: "Yakuza", imposteur: "Judgment", coche: true },
+      { id: 84, type: "game", difficulte:"difficile", nom: "Left 4 Dead / Back 4 Blood", innocent: "Left 4 Dead", imposteur: "Back 4 Blood", coche: true },
+      { id: 85, type: "game", difficulte:"difficile", nom: "Death Stranding / Metal Gear Solid", innocent: "Death Stranding", imposteur: "Metal Gear Solid", coche: true },
+      { id: 86, type: "game", difficulte:"difficile", nom: "Detroit: Become Human / Heavy Rain", innocent: "Detroit: Become Human", imposteur: "Heavy Rain", coche: true },
+      { id: 87, type: "game", difficulte:"difficile", nom: "Undertale / Deltarune", innocent: "Undertale", imposteur: "Deltarune", coche: true },
+      { id: 88, type: "game", difficulte:"difficile", nom: "RimWorld / Factorio", innocent: "RimWorld", imposteur: "Factorio", coche: true },
+      { id: 89, type: "game", difficulte:"difficile", nom: "Baldur's Gate 3 / Divinity Original Sin 2", innocent: "Baldur's Gate 3", imposteur: "Divinity Original Sin 2", coche: true },
+      { id: 90, type: "game", difficulte:"difficile", nom: "Slay the Spire / Monster Train", innocent: "Slay the Spire", imposteur: "Monster Train", coche: true },
+      { id: 91, type: "game", difficulte:"difficile", nom: "Escape from Tarkov / Hunt: Showdown", innocent: "Escape from Tarkov", imposteur: "Hunt: Showdown", coche: true },
+      { id: 92, type: "character", difficulte:"difficile", nom: "Agent 47 / Sam Fisher", innocent: "Agent 47", imposteur: "Sam Fisher", coche: true },
+      { id: 93, type: "character", difficulte:"difficile", nom: "Cloud Strife / Sephiroth", innocent: "Cloud Strife", imposteur: "Sephiroth", coche: true },
+      { id: 94, type: "character", difficulte:"difficile", nom: "Ezio Auditore / Altaïr", innocent: "Ezio Auditore", imposteur: "Altaïr", coche: true },
+      { id: 95, type: "character", difficulte:"difficile", nom: "Solid Snake / Big Boss", innocent: "Solid Snake", imposteur: "Big Boss", coche: true },
+      { id: 96, type: "character", difficulte:"difficile", nom: "Sans / Papyrus", innocent: "Sans", imposteur: "Papyrus", coche: true },
+      { id: 97, type: "character", difficulte:"difficile", nom: "Marcus Fenix / Doom Slayer", innocent: "Marcus Fenix", imposteur: "Doom Slayer", coche: true },
+      { id: 98, type: "character", difficulte:"difficile", nom: "Dante / Vergil", innocent: "Dante", imposteur: "Vergil", coche: true },
+      { id: 99, type: "weapon", difficulte:"difficile", nom: "Energy Sword / Gravity Hammer", innocent: "Energy Sword", imposteur: "Gravity Hammer", coche: true },
+      { id: 100, type: "weapon", difficulte:"difficile", nom: "Portal Gun / Gravity Gun", innocent: "Portal Gun", imposteur: "Gravity Gun", coche: true },
+      { id: 101, type: "weapon", difficulte:"difficile", nom: "BFG 9000 / Fusil à Plasma", innocent: "BFG 9000", imposteur: "Fusil à Plasma", coche: true },
+      { id: 102, type: "weapon", difficulte:"difficile", nom: "Haches de l'Exil / Lames du Chaos", innocent: "Haches de l'Exil", imposteur: "Lames du Chaos", coche: true },
+      { id: 103, type: "weapon", difficulte:"difficile", nom: "Buster Sword / Masamune", innocent: "Buster Sword", imposteur: "Masamune", coche: true },
+      { id: 104, type: "weapon", difficulte:"difficile", nom: "Pied-de-biche / Clé à molette", innocent: "Pied-de-biche", imposteur: "Clé à molette", coche: true }
     ];
+
+    function toggleSettingsDropdown() {
+        const zone = document.getElementById('settings-dropdown-zone');
+        zone.style.display = zone.style.display === "none" ? "block" : "none";
+    }
+
+    function selectIcon(el, icon) {
+        document.querySelectorAll('.icon-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        monIcone = icon;
+    }
 
     function renderWordList() {
         const filtreType = document.getElementById('word-type').value;
+        const filtreDiff = document.getElementById('word-difficulty').value;
         const container = document.getElementById('dynamic-word-list');
         container.innerHTML = "";
-        let count = 0;
 
         dictionnaireMots.forEach(mot => {
-            if (filtreType === "all" || mot.type === filtreType) {
-                count++;
+            if ((filtreType === "all" || mot.type === filtreType) && (filtreDiff === "all" || mot.difficulte === filtreDiff)) {
                 const div = document.createElement('div');
                 div.className = "checkbox-item";
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = "checkbox";
-                checkbox.id = `mot-${mot.id}`;
-                checkbox.checked = mot.coche;
-                
-                checkbox.onclick = function() {
-                    mot.coche = checkbox.checked;
-                    updateActiveCount();
-                };
-
-                const label = document.createElement('label');
-                label.htmlFor = `mot-${mot.id}`;
-                let prefixe = mot.type === "game" ? "[Jeu]" : mot.type === "character" ? "[Perso]" : "[Arme]";
-                label.innerText = `${prefixe} ${mot.nom}`;
-
-                div.appendChild(checkbox);
-                div.appendChild(label);
+                div.innerHTML = `<input type="checkbox" id="mot-${mot.id}" ${mot.coche ? 'checked' : ''}>
+                                 <label for="mot-${mot.id}" style="font-size:12px;">[${mot.type}] ${mot.nom}</label>`;
+                div.querySelector('input').onclick = (e) => { mot.coche = e.target.checked; updateActiveCount(); };
                 container.appendChild(div);
             }
         });
@@ -447,7 +538,8 @@
 
     function updateActiveCount() {
         const filtreType = document.getElementById('word-type').value;
-        const actifs = dictionnaireMots.filter(m => m.coche && (filtreType === "all" || m.type === filtreType));
+        const filtreDiff = document.getElementById('word-difficulty').value;
+        const actifs = dictionnaireMots.filter(m => m.coche && (filtreType === "all" || m.type === filtreType) && (filtreDiff === "all" || m.difficulte === filtreDiff));
         document.getElementById('active-count').innerText = actifs.length;
     }
 
@@ -455,188 +547,147 @@
 
     function showScreen(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const container = document.getElementById('main-container');
+        container.className = screenId === 'game-screen' ? "container large-game" : "container";
+        
+        document.body.className = "";
+        if(screenId === 'menu-screen' || screenId === 'join-screen') document.body.classList.add('menu-phase');
+        if(screenId === 'lobby-screen') document.body.classList.add('lobby-phase');
+        if(screenId === 'game-screen') document.body.classList.add('game-phase');
+
         document.getElementById(screenId).classList.add('active');
     }
 
-    /* --- SYNCHRONISATION SERVEUR (SOCKETS) --- */
-
     function createGame() {
-        const inputPseudo = document.getElementById('pseudo-input').value.trim();
-        if(inputPseudo !== "") monPseudo = inputPseudo;
-        socket.emit('createGame', monPseudo);
+        monPseudo = document.getElementById('pseudo-input').value.trim();
+        const settings = {
+            nbImposteurs: document.getElementById('impo-count').value,
+            filtreType: document.getElementById('word-type').value,
+            filtreDiff: document.getElementById('word-difficulty').value,
+            roleVisibility: document.getElementById('setting-role-visibility').value,
+            voteDisclosure: document.getElementById('setting-vote-disclosure').value
+        };
+        socket.emit('createGame', { pseudo: monPseudo, icone: monIcone, settings, dictionnaireMots });
     }
 
     function joinGame() {
-        const inputPseudo = document.getElementById('pseudo-input').value.trim();
-        if(inputPseudo !== "") monPseudo = inputPseudo;
-
+        monPseudo = document.getElementById('pseudo-input').value.trim();
         const codeEntre = document.getElementById('join-code-input').value.trim().toUpperCase();
-        if (codeEntre === "") {
-            alert("Veuillez entrer un code !");
-            return;
-        }
-        socket.emit('joinGame', { code: codeEntre, pseudo: monPseudo });
+        if (!codeEntre) return alert("Code requis !");
+        socket.emit('joinGame', { code: codeEntre, pseudo: monPseudo, icone: monIcone });
     }
 
-    function checkEnter(event, chatId, inputId) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            sendMsg(chatId, inputId);
-        }
-    }
-
+    function checkEnter(event, chatId, inputId) { if (event.key === "Enter") { event.preventDefault(); sendMsg(chatId, inputId); } }
     function sendMsg(chatId, inputId) {
         let input = document.getElementById(inputId);
-        if(input.value.trim() !== "") {
-            socket.emit('sendMessage', {
-                code: gameCodeActuel,
-                pseudo: monPseudo,
-                msg: input.value,
-                targetChat: chatId
-            });
+        if(input.value.trim()) {
+            socket.emit('sendMessage', { code: gameCodeActuel, pseudo: `${monIcone} ${monPseudo}`, msg: input.value, targetChat: chatId });
             input.value = "";
         }
     }
 
-    function startGame() {
-        const filtreType = document.getElementById('word-type').value;
-        const nbImposteurs = document.getElementById('impo-count').value;
-
-        socket.emit('startGame', {
-            code: gameCodeActuel,
-            settings: { filtreType, nbImposteurs },
-            dictionnaireMots: dictionnaireMots
-        });
-    }
-
-    // Envoi du vote sélectionné vers le script réseau
+    function startGame() { socket.emit('startGame', { code: gameCodeActuel }); }
     function submitVote() {
-        const select = document.getElementById('vote-select');
-        const cible = select.value;
-        if(!cible) {
-            alert("Veuillez sélectionner un joueur avant de valider votre vote !");
-            return;
-        }
+        const cible = document.getElementById('vote-select').value;
+        if(!cible) return alert("Choisis une cible !");
         document.getElementById('vote-btn').disabled = true;
         socket.emit('castVote', { code: gameCodeActuel, duJoueur: monPseudo, contre: cible });
     }
+    function returnToLobby() { socket.emit('requestLobbyReturn', gameCodeActuel); }
 
-    // Demande globale de retour au salon d'attente
-    function returnToLobby() {
-        socket.emit('requestLobbyReturn', gameCodeActuel);
-    }
-
-    /* --- RECEPTION ET ECOUTE DES EVENEMENTS SERVEUR --- */
-
+    /* --- EVENTS SOCKET --- */
     socket.on('gameCreated', (data) => {
-        gameCodeActuel = data.code;
+        gameCodeActuel = data.code; monPseudo = data.assignedPseudo;
+        document.getElementById('pseudo-input').value = monPseudo;
         document.getElementById('lobby-code-display').innerText = gameCodeActuel;
+        document.getElementById('start-game-btn').style.display = "block";
+        buildSettingsRecap(data.settings);
         updatePlayerListUI(data.players);
         showScreen('lobby-screen');
     });
 
     socket.on('gameJoined', (data) => {
-        gameCodeActuel = data.code;
+        gameCodeActuel = data.code; monPseudo = data.assignedPseudo;
+        document.getElementById('pseudo-input').value = monPseudo;
         document.getElementById('lobby-code-display').innerText = gameCodeActuel;
+        document.getElementById('start-game-btn').style.display = "none";
+        buildSettingsRecap(data.settings);
         updatePlayerListUI(data.players);
         showScreen('lobby-screen');
-        document.getElementById('join-code-input').value = ""; 
     });
 
-    socket.on('updatePlayers', (players) => {
-        updatePlayerListUI(players);
+    socket.on('updatePlayers', (data) => {
+        document.getElementById('start-game-btn').style.display = socket.id === data.hostId ? "block" : "none";
+        updatePlayerListUI(data.players);
     });
 
     socket.on('receiveMessage', (data) => {
         let chat = document.getElementById(data.targetChat);
-        if (chat) {
-            chat.innerHTML += `<div><b>${data.pseudo}:</b> ${data.msg}</div>`;
-            chat.scrollTop = chat.scrollHeight;
-        }
+        if (chat) { chat.innerHTML += `<div><b>${data.pseudo}:</b> ${data.msg}</div>`; chat.scrollTop = chat.scrollHeight; }
     });
 
     socket.on('gameStarted', (data) => {
         showScreen('game-screen');
-        document.getElementById('vote-btn').disabled = false; 
-        document.getElementById('role-display').innerText = data.role;
+        document.getElementById('vote-btn').disabled = false;
         document.getElementById('word-display').innerText = data.word;
 
-        document.getElementById('game-chat').innerHTML = `
-            <div style="color:#aaa; font-style:italic;">
-                Système: La partie a démarré ! Mode : [${data.filtreType}]. Il y a ${data.nbImposteurs} imposteur(s).
-            </div><br>
-        `;
+        if (data.roleVisibility === "hide-role-definitively") {
+            document.getElementById('role-display-container').style.display = "none";
+        } else {
+            document.getElementById('role-display-container').style.display = "block";
+            document.getElementById('role-display').innerText = data.role;
+        }
+
+        document.getElementById('game-chat').innerHTML = `<div style="color:#aaa; font-style:italic;">Système: La partie commence ! Devinez qui a un mot différent !</div><br>`;
     });
 
-    // Basculement automatique vers l'écran de fin
     socket.on('gameOver', (data) => {
         showScreen('end-screen');
         document.getElementById('end-title').innerText = data.winnerText;
-        
-        let rolesHTML = "";
+        let html = "";
         data.allRoles.forEach(p => {
-            let roleColor = p.role === "Imposteur" ? "color: #ff4a4a;" : "color: #2ecc71;";
-            rolesHTML += `<div>• <b>${p.pseudo}</b> : <span style="${roleColor}">${p.role}</span> (Mot : ${p.word})</div>`;
+            let color = p.role === "Imposteur" ? "#ff4a4a" : "#2ecc71";
+            html += `<div>• ${p.icone} <b>${p.pseudo}</b> : <span style="color:${color}">${p.role}</span> (Mot : <b>${p.word}</b>)</div>`;
         });
-        document.getElementById('end-roles-list').innerHTML = rolesHTML;
+        document.getElementById('end-roles-list').innerHTML = html;
     });
 
-    // Événement déclenché lorsque le salon est relancé
-    socket.on('backToLobby', (players) => {
-        updatePlayerListUI(players);
+    socket.on('backToLobby', (data) => {
+        document.getElementById('start-game-btn').style.display = socket.id === data.hostId ? "block" : "none";
+        updatePlayerListUI(data.players);
         showScreen('lobby-screen');
     });
 
-    socket.on('errorMsg', (msg) => {
-        alert(msg);
-    });
+    function buildSettingsRecap(s) {
+        if(!s) return;
+        let vis = s.roleVisibility === "hide-role-definitively" ? "🔴 Rôle caché" : "🟢 Rôles visibles";
+        document.getElementById('lobby-settings-recap').innerHTML = `
+            <b>Configuration de la partie :</b><br>
+            • Imposteur(s) : ${s.nbImposteurs} | Difficulté : ${s.filtreDiff}<br>
+            • Catégorie : ${s.filtreType} | Visibilité : ${vis} | Suivi Votes : ${s.voteDisclosure}
+        `;
+    }
 
     function updatePlayerListUI(players) {
-        // 1. Liste standard du Salon d'attente
         let listHTML = "";
-        players.forEach((p, idx) => {
-            let roleLabel = idx === 0 ? " (Hôte)" : " (Invité)";
-            if(p.pseudo === monPseudo) {
-                listHTML += `• <b>${p.pseudo}</b>${roleLabel}<br>`;
-            } else {
-                listHTML += `• ${p.pseudo}${roleLabel}<br>`;
-            }
-        });
+        players.forEach(p => { listHTML += `• ${p.icone} ${p.pseudo} ${p.id === socket.id ? '(Toi)':''}<br>`; });
         document.getElementById('player-list').innerHTML = listHTML;
 
-        // 2. Dispositif en direct (Statuts de connexion instantanés)
         let statusHTML = "";
         players.forEach(p => {
-            let isOnline = p.connected !== undefined ? p.connected : true; 
-            let dotClass = isOnline ? "online" : "offline";
-            let stateText = isOnline ? "Connecté" : "Déconnecté";
-            
-            statusHTML += `
-                <div class="player-status">
-                    <span>• ${p.pseudo}</span>
-                    <span style="font-size:12px; color:#aaa;">
-                        <span class="status-dot ${dotClass}"></span> ${stateText}
-                    </span>
-                </div>`;
+            let online = p.connected !== false;
+            statusHTML += `<div class="player-status"><span>${p.icone} ${p.pseudo}</span><span style="font-size:12px;"><span class="status-dot ${online?'online':'offline'}"></span> ${online?'En jeu':'Déco'}</span></div>`;
         });
         document.getElementById('game-player-status-list').innerHTML = statusHTML;
 
-        // 3. Remplissage des cibles potentielles pour le vote
-        const voteSelect = document.getElementById('vote-select');
-        let currentSelection = voteSelect.value;
-        voteSelect.innerHTML = '<option value="">-- Sélectionner un joueur --</option>';
-        
+        const select = document.getElementById('vote-select');
+        let current = select.value;
+        select.innerHTML = '<option value="">-- Voter pour --</option>';
         players.forEach(p => {
-            if(p.pseudo !== monPseudo) {
-                let opt = document.createElement('option');
-                opt.value = p.pseudo;
-                opt.innerText = p.pseudo;
-                voteSelect.appendChild(opt);
-            }
+            let opt = document.createElement('option'); opt.value = p.pseudo; opt.innerText = `${p.icone} ${p.pseudo}`; select.appendChild(opt);
         });
-        voteSelect.value = currentSelection;
+        select.value = current;
     }
 </script>
-
 </body>
 </html>
